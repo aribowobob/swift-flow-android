@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    SwiftFlowApp()
+                    App()
                 }
             }
         }
@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun SwiftFlowApp() {
+fun App() {
     val navController = rememberNavController()
     Scaffold(
         modifier = Modifier.fillMaxSize()

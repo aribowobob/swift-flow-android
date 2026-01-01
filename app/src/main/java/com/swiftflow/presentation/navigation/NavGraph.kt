@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.swiftflow.presentation.auth.AuthViewModel
 import com.swiftflow.presentation.auth.LoginScreen
+import com.swiftflow.presentation.delivery.DeliveryListScreen
 
 sealed class Screen(val route: String) {
     data object Login : Screen("login")
@@ -48,8 +49,16 @@ fun NavGraph(
         }
 
         composable(Screen.DeliveryList.route) {
-            // DeliveryListScreen will be created later
-            // Placeholder for now
+            DeliveryListScreen(
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onCreateDelivery = {
+                    navController.navigate(Screen.CreateDelivery.route)
+                }
+            )
         }
 
         composable(Screen.CreateDelivery.route) {
