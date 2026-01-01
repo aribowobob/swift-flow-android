@@ -1,10 +1,9 @@
-package com.swiftflow.presentation.delivery
+package com.swiftflow.presentation.product
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -12,28 +11,25 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.swiftflow.domain.model.UserRole
+import com.swiftflow.domain.model.Product
 import com.swiftflow.presentation.auth.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeliveryListScreen(
+fun ProductListScreen(
     onLogout: () -> Unit,
-    onCreateDelivery: () -> Unit = {},
-    viewModel: DeliveryViewModel = hiltViewModel(),
+    viewModel: ProductViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    val authState by authViewModel.state.collectAsState()
-
-    val userRole = authState.loginResponse?.user?.role
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Deliveries") },
+                title = { Text("Products") },
                 actions = {
                     IconButton(onClick = {
                         authViewModel.logout()
@@ -73,12 +69,12 @@ fun DeliveryListScreen(
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.loadDeliveries() }) {
+                        Button(onClick = { viewModel.loadProducts() }) {
                             Text("Retry")
                         }
                     }
                 }
-                state.deliveries.isEmpty() -> {
+                state.products.isEmpty() -> {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -87,18 +83,10 @@ fun DeliveryListScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "No deliveries yet",
+                            text = "No products available",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        if (userRole == UserRole.SALES) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Tap + to create your first delivery",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
                     }
                 }
                 else -> {
@@ -107,8 +95,8 @@ fun DeliveryListScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(state.deliveries) { delivery ->
-                            DeliveryCard(delivery = delivery)
+                        items(state.products) { product ->
+                            ProductCard(product = product)
                         }
                     }
                 }
@@ -118,77 +106,45 @@ fun DeliveryListScreen(
 }
 
 @Composable
-fun DeliveryCard(delivery: com.swiftflow.domain.model.Delivery) {
+fun ProductCard(product: Product) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = delivery.locationName ?: "No location name",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            if (delivery.street != null || delivery.district != null || delivery.city != null) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
-                    text = listOfNotNull(
-                        delivery.street,
-                        delivery.district,
-                        delivery.city,
-                        delivery.region
-                    ).joinToString(", "),
+                    text = product.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "SKU: ${product.sku}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.secondaryContainer
             ) {
-                StatusChip(status = delivery.status)
-
                 Text(
-                    text = delivery.createdAt.take(10), // Show only date
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = product.unit,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
         }
-    }
-}
-
-@Composable
-fun StatusChip(status: com.swiftflow.domain.model.DeliveryStatus) {
-    val (backgroundColor, textColor) = when (status) {
-        com.swiftflow.domain.model.DeliveryStatus.READY ->
-            MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
-        com.swiftflow.domain.model.DeliveryStatus.DONE ->
-            MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
-        com.swiftflow.domain.model.DeliveryStatus.BROKEN ->
-            MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
-        com.swiftflow.domain.model.DeliveryStatus.NEED_TO_CONFIRM ->
-            MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
-    }
-
-    Surface(
-        shape = MaterialTheme.shapes.small,
-        color = backgroundColor
-    ) {
-        Text(
-            text = status.name.replace("_", " "),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelSmall,
-            color = textColor
-        )
     }
 }

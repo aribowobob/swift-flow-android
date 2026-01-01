@@ -10,13 +10,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.swiftflow.presentation.auth.AuthViewModel
 import com.swiftflow.presentation.auth.LoginScreen
-import com.swiftflow.presentation.delivery.DeliveryListScreen
+import com.swiftflow.presentation.common.MainScreen
+import com.swiftflow.presentation.delivery.CreateDeliveryScreen
 
 sealed class Screen(val route: String) {
     data object Login : Screen("login")
-    data object DeliveryList : Screen("deliveries")
+    data object Main : Screen("main")
     data object CreateDelivery : Screen("create_delivery")
-    data object ProductList : Screen("products")
 }
 
 @Composable
@@ -28,7 +28,7 @@ fun NavGraph(
     val authState by authViewModel.state.collectAsState()
 
     val startDestination = if (authState.isLoggedIn) {
-        Screen.DeliveryList.route
+        Screen.Main.route
     } else {
         Screen.Login.route
     }
@@ -41,15 +41,15 @@ fun NavGraph(
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(Screen.DeliveryList.route) {
+                    navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable(Screen.DeliveryList.route) {
-            DeliveryListScreen(
+        composable(Screen.Main.route) {
+            MainScreen(
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
@@ -57,18 +57,20 @@ fun NavGraph(
                 },
                 onCreateDelivery = {
                     navController.navigate(Screen.CreateDelivery.route)
-                }
+                },
+                authViewModel = authViewModel
             )
         }
 
         composable(Screen.CreateDelivery.route) {
-            // CreateDeliveryScreen will be created later
-            // Placeholder for now
-        }
-
-        composable(Screen.ProductList.route) {
-            // ProductListScreen will be created later
-            // Placeholder for now
+            CreateDeliveryScreen(
+                onDeliveryCreated = {
+                    navController.popBackStack()
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

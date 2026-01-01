@@ -30,12 +30,21 @@ class AuthViewModel @Inject constructor(
 
     init {
         checkLoginStatus()
+        loadSavedUserData()
     }
 
     private fun checkLoginStatus() {
         viewModelScope.launch {
             authRepository.isLoggedIn().collect { isLoggedIn ->
                 _state.update { it.copy(isLoggedIn = isLoggedIn) }
+            }
+        }
+    }
+
+    private fun loadSavedUserData() {
+        viewModelScope.launch {
+            authRepository.getSavedLoginResponse().collect { loginResponse ->
+                _state.update { it.copy(loginResponse = loginResponse) }
             }
         }
     }

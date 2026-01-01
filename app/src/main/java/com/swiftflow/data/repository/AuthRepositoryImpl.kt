@@ -22,6 +22,7 @@ class AuthRepositoryImpl @Inject constructor(
             val response = authApi.login(LoginRequest(username, password))
             tokenManager.saveToken(response.token)
             tokenManager.saveUserInfo(response.user.id, response.user.username)
+            tokenManager.saveLoginResponse(response)
             emit(Resource.Success(response))
         } catch (e: Exception) {
             emit(Resource.Error(e.message ?: "An unexpected error occurred"))
@@ -34,5 +35,9 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun isLoggedIn(): Flow<Boolean> {
         return tokenManager.getToken().map { it != null }
+    }
+
+    override fun getSavedLoginResponse(): Flow<LoginResponse?> {
+        return tokenManager.getLoginResponse()
     }
 }

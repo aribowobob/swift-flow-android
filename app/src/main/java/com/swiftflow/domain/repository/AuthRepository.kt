@@ -8,4 +8,5 @@ interface AuthRepository {
     suspend fun login(username: String, password: String): Flow<Resource<LoginResponse>>
     suspend fun logout()
     fun isLoggedIn(): Flow<Boolean>
+    fun getSavedLoginResponse(): Flow<LoginResponse?>
 }
