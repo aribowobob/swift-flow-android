@@ -1,10 +1,12 @@
 package com.swiftflow.presentation.product
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
@@ -28,6 +30,7 @@ fun ProductListScreen(
     onLogout: () -> Unit,
     onEditProduct: (Int) -> Unit = {},
     onCreateProduct: () -> Unit = {},
+    externalSuccessMessage: String? = null,
     viewModel: ProductViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
@@ -42,6 +45,19 @@ fun ProductListScreen(
         refreshing = state.isLoading,
         onRefresh = { viewModel.loadProducts() }
     )
+
+    // Show external success message (from navigation) and reload products
+    LaunchedEffect(externalSuccessMessage) {
+        externalSuccessMessage?.let { message ->
+            // Reload products to get fresh data
+            viewModel.loadProducts()
+            // Show success message
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
 
     // Show success message
     LaunchedEffect(state.successMessage) {
@@ -70,14 +86,21 @@ fun ProductListScreen(
             TopAppBar(
                 title = { Text("Products") },
                 actions = {
-                    IconButton(onClick = {
-                        authViewModel.logout()
-                        onLogout()
-                    }) {
+                    OutlinedButton(
+                        onClick = onCreateProduct,
+                        modifier = Modifier.padding(end = 8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                    ) {
                         Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Logout"
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
                         )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add New Product")
                     }
                 }
             )

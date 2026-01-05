@@ -25,18 +25,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
-                actions = {
-                    IconButton(onClick = {
-                        authViewModel.logout()
-                        onLogout()
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Logout"
-                        )
-                    }
-                }
+                title = { Text("Profile") }
             )
         }
     ) { paddingValues ->
@@ -99,22 +88,6 @@ fun SettingsScreen(
 
             Divider()
 
-            SettingsItem(
-                icon = Icons.Default.Lock,
-                title = "Privacy Policy",
-                subtitle = "View our privacy policy"
-            )
-
-            Divider()
-
-            SettingsItem(
-                icon = Icons.Default.Star,
-                title = "Rate App",
-                subtitle = "Help us improve"
-            )
-
-            Divider()
-
             // Logout Button
             Spacer(modifier = Modifier.weight(1f))
 
@@ -125,7 +98,7 @@ fun SettingsScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error
                 )

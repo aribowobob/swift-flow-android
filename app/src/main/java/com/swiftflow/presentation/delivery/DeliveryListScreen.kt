@@ -33,18 +33,7 @@ fun DeliveryListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Deliveries") },
-                actions = {
-                    IconButton(onClick = {
-                        authViewModel.logout()
-                        onLogout()
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Logout"
-                        )
-                    }
-                }
+                title = { Text("Deliveries") }
             )
         }
     ) { paddingValues ->

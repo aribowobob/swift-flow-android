@@ -24,7 +24,7 @@ sealed class BottomNavItem(
     data object Dashboard : BottomNavItem("dashboard", "Dashboard", Icons.Default.Home)
     data object Deliveries : BottomNavItem("deliveries", "Deliveries", Icons.Default.LocalShipping)
     data object Products : BottomNavItem("products", "Products", Icons.Default.ShoppingCart)
-    data object Settings : BottomNavItem("settings", "Settings", Icons.Default.Settings)
+    data object Settings : BottomNavItem("settings", "Profile", Icons.Default.Person)
 }
 
 @Composable
@@ -33,6 +33,7 @@ fun MainScreen(
     onCreateDelivery: () -> Unit,
     onCreateProduct: () -> Unit = {},
     onEditProduct: (Int) -> Unit = {},
+    productSuccessMessage: String? = null,
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val authState by authViewModel.state.collectAsState()
@@ -89,24 +90,13 @@ fun MainScreen(
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
-            when {
-                // Show FAB for SALES users on Deliveries tab
-                userRole == UserRole.SALES && selectedItem == BottomNavItem.Deliveries -> {
-                    FloatingActionButton(onClick = onCreateDelivery) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Create Delivery"
-                        )
-                    }
-                }
-                // Show FAB for SUPERVISOR on Products tab
-                userRole == UserRole.SUPERVISOR && selectedItem == BottomNavItem.Products -> {
-                    FloatingActionButton(onClick = onCreateProduct) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Create Product"
-                        )
-                    }
+            // Show FAB for SALES users on Deliveries tab
+            if (userRole == UserRole.SALES && selectedItem == BottomNavItem.Deliveries) {
+                FloatingActionButton(onClick = onCreateDelivery) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Create Delivery"
+                    )
                 }
             }
         }
@@ -128,7 +118,8 @@ fun MainScreen(
                 ProductListScreen(
                     onLogout = onLogout,
                     onEditProduct = onEditProduct,
-                    onCreateProduct = onCreateProduct
+                    onCreateProduct = onCreateProduct,
+                    externalSuccessMessage = productSuccessMessage
                 )
             }
             BottomNavItem.Settings -> {

@@ -1,8 +1,12 @@
 package com.swiftflow.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -33,6 +37,7 @@ fun NavGraph(
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val authState by authViewModel.state.collectAsState()
+    var productSuccessMessage by remember { mutableStateOf<String?>(null) }
 
     val startDestination = if (authState.isLoggedIn) {
         Screen.Main.route
@@ -56,6 +61,15 @@ fun NavGraph(
         }
 
         composable(Screen.Main.route) {
+            // Clear success message after showing
+            LaunchedEffect(productSuccessMessage) {
+                if (productSuccessMessage != null) {
+                    // Message will be shown in ProductListScreen, wait for snackbar to display
+                    kotlinx.coroutines.delay(2000)
+                    productSuccessMessage = null
+                }
+            }
+
             MainScreen(
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
@@ -71,6 +85,7 @@ fun NavGraph(
                 onEditProduct = { productId ->
                     navController.navigate(Screen.EditProduct.createRoute(productId))
                 },
+                productSuccessMessage = productSuccessMessage,
                 authViewModel = authViewModel
             )
         }
@@ -91,6 +106,9 @@ fun NavGraph(
                 productId = null,
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onProductSaved = { message ->
+                    productSuccessMessage = message
                 }
             )
         }
@@ -106,6 +124,9 @@ fun NavGraph(
                 productId = productId,
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onProductSaved = { message ->
+                    productSuccessMessage = message
                 }
             )
         }

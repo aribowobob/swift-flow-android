@@ -10,14 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.swiftflow.domain.model.Product
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductFormScreen(
     productId: Int? = null,
     onNavigateBack: () -> Unit,
+    onProductSaved: (String) -> Unit = {},
     viewModel: ProductViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -26,9 +25,6 @@ fun ProductFormScreen(
     var name by remember { mutableStateOf("") }
     var unit by remember { mutableStateOf("") }
     var isFormInitialized by remember { mutableStateOf(false) }
-
-    // Coroutine scope for snackbar
-    val scope = rememberCoroutineScope()
 
     // Snackbar state
     val snackbarHostState = remember { SnackbarHostState() }
@@ -49,19 +45,14 @@ fun ProductFormScreen(
         }
     }
 
-    // Handle successful operation - show snackbar then navigate back
+    // Handle successful operation - navigate back immediately with success message
     LaunchedEffect(state.operationSuccess, state.successMessage) {
         if (state.operationSuccess && state.successMessage != null) {
-            scope.launch {
-                snackbarHostState.showSnackbar(
-                    message = state.successMessage ?: "",
-                    duration = SnackbarDuration.Short
-                )
-                delay(1500) // Wait for snackbar to be visible
-                viewModel.clearSuccessMessage()
-                viewModel.clearOperationSuccess()
-                onNavigateBack()
-            }
+            val message = state.successMessage ?: ""
+            viewModel.clearSuccessMessage()
+            viewModel.clearOperationSuccess()
+            onProductSaved(message)
+            onNavigateBack()
         }
     }
 
@@ -86,19 +77,6 @@ fun ProductFormScreen(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back"
                         )
-                    }
-                },
-                actions = {
-                    // Temporary test button
-                    Button(onClick = {
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                message = "lorem ipsum",
-                                duration = SnackbarDuration.Short
-                            )
-                        }
-                    }) {
-                        Text("Test")
                     }
                 }
             )

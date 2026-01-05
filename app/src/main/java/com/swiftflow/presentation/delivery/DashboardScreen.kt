@@ -33,18 +33,7 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dashboard") },
-                actions = {
-                    IconButton(onClick = {
-                        authViewModel.logout()
-                        onLogout()
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Logout"
-                        )
-                    }
-                }
+                title = { Text("Dashboard") }
             )
         }
     ) { paddingValues ->
