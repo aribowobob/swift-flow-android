@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -30,12 +31,23 @@ sealed class BottomNavItem(
 fun MainScreen(
     onLogout: () -> Unit,
     onCreateDelivery: () -> Unit,
+    onCreateProduct: () -> Unit = {},
+    onEditProduct: (Int) -> Unit = {},
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val authState by authViewModel.state.collectAsState()
-    var selectedItem by remember { mutableStateOf<BottomNavItem>(BottomNavItem.Dashboard) }
+    var selectedRoute by rememberSaveable { mutableStateOf(BottomNavItem.Dashboard.route) }
 
     val userRole = authState.loginResponse?.user?.role
+
+    // Convert route to BottomNavItem
+    val selectedItem = when (selectedRoute) {
+        BottomNavItem.Dashboard.route -> BottomNavItem.Dashboard
+        BottomNavItem.Deliveries.route -> BottomNavItem.Deliveries
+        BottomNavItem.Products.route -> BottomNavItem.Products
+        BottomNavItem.Settings.route -> BottomNavItem.Settings
+        else -> BottomNavItem.Dashboard
+    }
 
     // Define navigation items based on role
     val navItems = remember(userRole) {
@@ -70,19 +82,31 @@ fun MainScreen(
                         },
                         label = { Text(item.title) },
                         selected = selectedItem == item,
-                        onClick = { selectedItem = item }
+                        onClick = { selectedRoute = item.route }
                     )
                 }
             }
         },
+        floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
-            // Show FAB only for SALES users on Deliveries tab
-            if (userRole == UserRole.SALES && selectedItem == BottomNavItem.Deliveries) {
-                FloatingActionButton(onClick = onCreateDelivery) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Create Delivery"
-                    )
+            when {
+                // Show FAB for SALES users on Deliveries tab
+                userRole == UserRole.SALES && selectedItem == BottomNavItem.Deliveries -> {
+                    FloatingActionButton(onClick = onCreateDelivery) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Create Delivery"
+                        )
+                    }
+                }
+                // Show FAB for SUPERVISOR on Products tab
+                userRole == UserRole.SUPERVISOR && selectedItem == BottomNavItem.Products -> {
+                    FloatingActionButton(onClick = onCreateProduct) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Create Product"
+                        )
+                    }
                 }
             }
         }
@@ -102,7 +126,9 @@ fun MainScreen(
             }
             BottomNavItem.Products -> {
                 ProductListScreen(
-                    onLogout = onLogout
+                    onLogout = onLogout,
+                    onEditProduct = onEditProduct,
+                    onCreateProduct = onCreateProduct
                 )
             }
             BottomNavItem.Settings -> {

@@ -104,7 +104,7 @@ fun DeliveryListScreen(
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(state.deliveries) { delivery ->
@@ -118,7 +118,14 @@ fun DeliveryListScreen(
 }
 
 @Composable
-fun DeliveryCard(delivery: com.swiftflow.domain.model.Delivery) {
+fun DeliveryCard(delivery: com.swiftflow.domain.model.DeliveryListItem) {
+    // Format title: "District (Location Name)" or just "District"
+    val title = if (delivery.locationName != null) {
+        "${delivery.district ?: "Unknown"} (${delivery.locationName})"
+    } else {
+        delivery.district ?: "Unknown Location"
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -128,28 +135,39 @@ fun DeliveryCard(delivery: com.swiftflow.domain.model.Delivery) {
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            // Title with district and location name
             Text(
-                text = delivery.locationName ?: "No location name",
+                text = title,
                 style = MaterialTheme.typography.titleMedium
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            if (delivery.street != null || delivery.district != null || delivery.city != null) {
-                Text(
-                    text = listOfNotNull(
-                        delivery.street,
-                        delivery.district,
-                        delivery.city,
-                        delivery.region
-                    ).joinToString(", "),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Product list (max 2 items)
+            if (delivery.products.isNotEmpty()) {
+                val displayProducts = delivery.products.take(2)
+                val remainingCount = delivery.products.size - displayProducts.size
+
+                displayProducts.forEach { product ->
+                    Text(
+                        text = "${product.productName}: ${product.qty.toInt()} ${product.productUnit}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (remainingCount > 0) {
+                    Text(
+                        text = "+$remainingCount more product${if (remainingCount > 1) "s" else ""}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Status and date row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -158,7 +176,7 @@ fun DeliveryCard(delivery: com.swiftflow.domain.model.Delivery) {
                 StatusChip(status = delivery.status)
 
                 Text(
-                    text = delivery.createdAt.take(10), // Show only date
+                    text = com.swiftflow.utils.DateFormatter.formatToDisplay(delivery.createdAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

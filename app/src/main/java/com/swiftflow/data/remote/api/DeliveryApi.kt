@@ -2,6 +2,7 @@ package com.swiftflow.data.remote.api
 
 import com.swiftflow.domain.model.CreateDeliveryRequest
 import com.swiftflow.domain.model.Delivery
+import com.swiftflow.domain.model.DeliveryListItem
 import com.swiftflow.domain.model.DeliveryPhoto
 import com.swiftflow.domain.model.DeliveryWithDetails
 import retrofit2.http.*
@@ -15,7 +16,7 @@ interface DeliveryApi {
         @Query("city") city: String? = null,
         @Query("region") region: String? = null,
         @Query("status") status: String? = null
-    ): List<Delivery>
+    ): List<DeliveryListItem>
 
     @GET("deliveries/{id}")
     suspend fun getDelivery(@Path("id") id: Int): DeliveryWithDetails

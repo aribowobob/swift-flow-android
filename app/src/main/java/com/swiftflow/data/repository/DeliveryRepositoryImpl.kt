@@ -3,6 +3,7 @@ package com.swiftflow.data.repository
 import com.swiftflow.data.remote.api.DeliveryApi
 import com.swiftflow.domain.model.CreateDeliveryRequest
 import com.swiftflow.domain.model.Delivery
+import com.swiftflow.domain.model.DeliveryListItem
 import com.swiftflow.domain.model.DeliveryWithDetails
 import com.swiftflow.domain.repository.DeliveryRepository
 import com.swiftflow.utils.Resource
@@ -21,7 +22,7 @@ class DeliveryRepositoryImpl @Inject constructor(
         city: String?,
         region: String?,
         status: String?
-    ): Flow<Resource<List<Delivery>>> = flow {
+    ): Flow<Resource<List<DeliveryListItem>>> = flow {
         try {
             emit(Resource.Loading())
             val deliveries = deliveryApi.getDeliveries(page, limit, district, city, region, status)

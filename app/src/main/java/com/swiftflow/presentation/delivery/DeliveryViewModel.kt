@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.swiftflow.domain.model.CreateDeliveryRequest
 import com.swiftflow.domain.model.Delivery
+import com.swiftflow.domain.model.DeliveryListItem
 import com.swiftflow.domain.model.DeliveryProductInput
 import com.swiftflow.domain.repository.DeliveryRepository
 import com.swiftflow.utils.Resource
@@ -17,7 +18,7 @@ import javax.inject.Inject
 
 data class DeliveryState(
     val isLoading: Boolean = false,
-    val deliveries: List<Delivery> = emptyList(),
+    val deliveries: List<DeliveryListItem> = emptyList(),
     val error: String? = null,
     val createdDelivery: Delivery? = null
 )

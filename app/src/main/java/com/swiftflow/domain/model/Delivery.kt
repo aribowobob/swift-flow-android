@@ -57,6 +57,32 @@ data class CreateDeliveryRequest(
     val products: List<DeliveryProductInput>
 )
 
+// For list view - flattened delivery with products
+data class DeliveryListItem(
+    val id: Int,
+    @SerializedName("location_name")
+    val locationName: String?,
+    val street: String?,
+    val district: String?,
+    val city: String?,
+    val region: String?,
+    val lat: String?,
+    val lon: String?,
+    val notes: String?,
+    val status: DeliveryStatus,
+    @SerializedName("created_at")
+    val createdAt: String,
+    @SerializedName("created_by")
+    val createdBy: Int,
+    @SerializedName("updated_at")
+    val updatedAt: String,
+    @SerializedName("updated_by")
+    val updatedBy: Int,
+    val products: List<DeliveryProductDetail>,
+    val photos: List<DeliveryPhoto>
+)
+
+// For detail view
 data class DeliveryWithDetails(
     val delivery: Delivery,
     val products: List<DeliveryProductDetail>,
