@@ -23,7 +23,7 @@ android {
         }
 
         // API Base URL
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080/api/\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8081/api/\"")
     }
 
     buildTypes {
@@ -115,6 +115,9 @@ dependencies {
 
     // Location Services
     implementation("com.google.android.gms:play-services-location:21.1.0")
+
+    // EXIF for photo metadata
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

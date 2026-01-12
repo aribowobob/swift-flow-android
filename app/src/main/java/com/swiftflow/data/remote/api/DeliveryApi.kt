@@ -5,6 +5,8 @@ import com.swiftflow.domain.model.Delivery
 import com.swiftflow.domain.model.DeliveryListItem
 import com.swiftflow.domain.model.DeliveryPhoto
 import com.swiftflow.domain.model.DeliveryWithDetails
+import com.swiftflow.domain.model.UpdateDeliveryRequest
+import okhttp3.MultipartBody
 import retrofit2.http.*
 
 interface DeliveryApi {
@@ -24,10 +26,23 @@ interface DeliveryApi {
     @POST("deliveries")
     suspend fun createDelivery(@Body request: CreateDeliveryRequest): Delivery
 
+    @PUT("deliveries/{id}")
+    suspend fun updateDelivery(
+        @Path("id") id: Int,
+        @Body request: UpdateDeliveryRequest
+    ): Delivery
+
     @POST("deliveries/{id}/photos")
     suspend fun uploadPhoto(
         @Path("id") deliveryId: Int,
         @Body url: String
+    ): DeliveryPhoto
+
+    @Multipart
+    @POST("deliveries/{id}/photos/upload")
+    suspend fun uploadPhotoFile(
+        @Path("id") deliveryId: Int,
+        @Part photo: MultipartBody.Part
     ): DeliveryPhoto
 
     @DELETE("photos/{id}")

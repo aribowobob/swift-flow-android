@@ -17,7 +17,7 @@ import androidx.navigation.navArgument
 import com.swiftflow.presentation.auth.AuthViewModel
 import com.swiftflow.presentation.auth.LoginScreen
 import com.swiftflow.presentation.common.MainScreen
-import com.swiftflow.presentation.delivery.CreateDeliveryScreen
+import com.swiftflow.presentation.delivery.wizard.CreateDeliveryWizardScreen
 import com.swiftflow.presentation.product.ProductFormScreen
 
 sealed class Screen(val route: String) {
@@ -91,7 +91,7 @@ fun NavGraph(
         }
 
         composable(Screen.CreateDelivery.route) {
-            CreateDeliveryScreen(
+            CreateDeliveryWizardScreen(
                 onDeliveryCreated = {
                     navController.popBackStack()
                 },

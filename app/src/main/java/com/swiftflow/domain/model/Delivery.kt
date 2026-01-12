@@ -54,7 +54,22 @@ data class CreateDeliveryRequest(
     val lat: String?,
     val lon: String?,
     val notes: String?,
+    val status: DeliveryStatus? = null,
     val products: List<DeliveryProductInput>
+)
+
+data class UpdateDeliveryRequest(
+    @SerializedName("location_name")
+    val locationName: String? = null,
+    val street: String? = null,
+    val district: String? = null,
+    val city: String? = null,
+    val region: String? = null,
+    val lat: String? = null,
+    val lon: String? = null,
+    val notes: String? = null,
+    val status: DeliveryStatus? = null,
+    val products: List<DeliveryProductInput>? = null
 )
 
 // For list view - flattened delivery with products

@@ -8,12 +8,16 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.swiftflow.domain.model.UserRole
 import com.swiftflow.presentation.auth.AuthViewModel
 
@@ -27,8 +31,22 @@ fun DeliveryListScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val authState by authViewModel.state.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val userRole = authState.loginResponse?.user?.role
+
+    // Refresh deliveries when screen becomes visible
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.loadDeliveries()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold(
         topBar = {
