@@ -17,6 +17,7 @@ import androidx.navigation.navArgument
 import com.swiftflow.presentation.auth.AuthViewModel
 import com.swiftflow.presentation.auth.LoginScreen
 import com.swiftflow.presentation.common.MainScreen
+import com.swiftflow.presentation.delivery.DeliveryDetailScreen
 import com.swiftflow.presentation.delivery.wizard.CreateDeliveryWizardScreen
 import com.swiftflow.presentation.product.ProductFormScreen
 
@@ -24,6 +25,9 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Main : Screen("main")
     data object CreateDelivery : Screen("create_delivery")
+    data object DeliveryDetail : Screen("delivery_detail/{deliveryId}") {
+        fun createRoute(deliveryId: Int) = "delivery_detail/$deliveryId"
+    }
     data object CreateProduct : Screen("create_product")
     data object EditProduct : Screen("edit_product/{productId}") {
         fun createRoute(productId: Int) = "edit_product/$productId"
@@ -79,6 +83,9 @@ fun NavGraph(
                 onCreateDelivery = {
                     navController.navigate(Screen.CreateDelivery.route)
                 },
+                onDeliveryClick = { deliveryId ->
+                    navController.navigate(Screen.DeliveryDetail.createRoute(deliveryId))
+                },
                 onCreateProduct = {
                     navController.navigate(Screen.CreateProduct.route)
                 },
@@ -87,6 +94,21 @@ fun NavGraph(
                 },
                 productSuccessMessage = productSuccessMessage,
                 authViewModel = authViewModel
+            )
+        }
+
+        composable(
+            route = Screen.DeliveryDetail.route,
+            arguments = listOf(
+                navArgument("deliveryId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val deliveryId = backStackEntry.arguments?.getInt("deliveryId") ?: return@composable
+            DeliveryDetailScreen(
+                deliveryId = deliveryId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
             )
         }
 

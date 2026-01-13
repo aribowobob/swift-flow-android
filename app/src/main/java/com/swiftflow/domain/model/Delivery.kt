@@ -94,14 +94,18 @@ data class DeliveryListItem(
     @SerializedName("updated_by")
     val updatedBy: Int,
     val products: List<DeliveryProductDetail>,
-    val photos: List<DeliveryPhoto>
+    val photos: List<DeliveryPhoto>,
+    @SerializedName("created_by_initial")
+    val createdByInitial: String?
 )
 
 // For detail view
 data class DeliveryWithDetails(
     val delivery: Delivery,
     val products: List<DeliveryProductDetail>,
-    val photos: List<DeliveryPhoto>
+    val photos: List<DeliveryPhoto>,
+    @SerializedName("created_by_initial")
+    val createdByInitial: String?
 )
 
 data class DeliveryProductDetail(

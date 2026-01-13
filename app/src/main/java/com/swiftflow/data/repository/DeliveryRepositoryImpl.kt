@@ -7,7 +7,6 @@ import com.swiftflow.domain.model.CreateDeliveryRequest
 import com.swiftflow.domain.model.Delivery
 import com.swiftflow.domain.model.DeliveryListItem
 import com.swiftflow.domain.model.DeliveryPhoto
-import com.swiftflow.domain.model.DeliveryWithDetails
 import com.swiftflow.domain.model.UpdateDeliveryRequest
 import com.swiftflow.domain.repository.DeliveryRepository
 import com.swiftflow.utils.Resource
@@ -42,7 +41,7 @@ class DeliveryRepositoryImpl @Inject constructor(
         emit(Resource.Error(e.message ?: "Failed to fetch deliveries"))
     }
 
-    override suspend fun getDelivery(id: Int): Flow<Resource<DeliveryWithDetails>> = flow {
+    override suspend fun getDelivery(id: Int): Flow<Resource<DeliveryListItem>> = flow {
         emit(Resource.Loading())
         val delivery = deliveryApi.getDelivery(id)
         emit(Resource.Success(delivery))

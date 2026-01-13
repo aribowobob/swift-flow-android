@@ -7,13 +7,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.swiftflow.domain.model.DeliveryStatus
 import com.swiftflow.presentation.auth.AuthViewModel
 
@@ -26,9 +30,25 @@ fun DashboardScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val authState by authViewModel.state.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    val userRole = authState.loginResponse?.user?.role?.name ?: "Unknown"
+    val userRole = authState.loginResponse?.user?.role
+    val userRoleName = userRole?.name ?: "Unknown"
     val username = authState.loginResponse?.user?.username ?: "User"
+
+    // Refresh deliveries when screen becomes visible
+    // Backend automatically filters by user role (SALES sees only their own deliveries)
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.loadDeliveries()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -93,7 +113,7 @@ fun DashboardScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Role: $userRole",
+                                    text = "Role: $userRoleName",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )

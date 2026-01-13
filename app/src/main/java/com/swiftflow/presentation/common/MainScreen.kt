@@ -31,6 +31,7 @@ sealed class BottomNavItem(
 fun MainScreen(
     onLogout: () -> Unit,
     onCreateDelivery: () -> Unit,
+    onDeliveryClick: (Int) -> Unit = {},
     onCreateProduct: () -> Unit = {},
     onEditProduct: (Int) -> Unit = {},
     productSuccessMessage: String? = null,
@@ -61,7 +62,8 @@ fun MainScreen(
             )
             UserRole.SALES -> listOf(
                 BottomNavItem.Dashboard,
-                BottomNavItem.Deliveries
+                BottomNavItem.Deliveries,
+                BottomNavItem.Settings
             )
             else -> listOf(
                 BottomNavItem.Dashboard,
@@ -111,7 +113,8 @@ fun MainScreen(
             BottomNavItem.Deliveries -> {
                 DeliveryListScreen(
                     onLogout = onLogout,
-                    onCreateDelivery = onCreateDelivery
+                    onCreateDelivery = onCreateDelivery,
+                    onDeliveryClick = onDeliveryClick
                 )
             }
             BottomNavItem.Products -> {

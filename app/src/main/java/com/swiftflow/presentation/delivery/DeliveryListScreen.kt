@@ -26,6 +26,7 @@ import com.swiftflow.presentation.auth.AuthViewModel
 fun DeliveryListScreen(
     onLogout: () -> Unit,
     onCreateDelivery: () -> Unit = {},
+    onDeliveryClick: (Int) -> Unit = {},
     viewModel: DeliveryViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
@@ -36,6 +37,7 @@ fun DeliveryListScreen(
     val userRole = authState.loginResponse?.user?.role
 
     // Refresh deliveries when screen becomes visible
+    // Backend automatically filters by user role (SALES sees only their own deliveries)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -115,7 +117,10 @@ fun DeliveryListScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(state.deliveries) { delivery ->
-                            DeliveryCard(delivery = delivery)
+                            DeliveryCard(
+                                delivery = delivery,
+                                onClick = { onDeliveryClick(delivery.id) }
+                            )
                         }
                     }
                 }
@@ -125,7 +130,10 @@ fun DeliveryListScreen(
 }
 
 @Composable
-fun DeliveryCard(delivery: com.swiftflow.domain.model.DeliveryListItem) {
+fun DeliveryCard(
+    delivery: com.swiftflow.domain.model.DeliveryListItem,
+    onClick: () -> Unit = {}
+) {
     // Format title: "District (Location Name)" or just "District"
     val title = if (delivery.locationName != null) {
         "${delivery.district ?: "Unknown"} (${delivery.locationName})"
@@ -135,7 +143,8 @@ fun DeliveryCard(delivery: com.swiftflow.domain.model.DeliveryListItem) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier

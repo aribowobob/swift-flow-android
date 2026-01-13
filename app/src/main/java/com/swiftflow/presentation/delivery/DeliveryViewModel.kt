@@ -18,6 +18,7 @@ import javax.inject.Inject
 
 data class DeliveryState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val deliveries: List<DeliveryListItem> = emptyList(),
     val error: String? = null,
     val createdDelivery: Delivery? = null
@@ -31,10 +32,6 @@ class DeliveryViewModel @Inject constructor(
     private val _state = MutableStateFlow(DeliveryState())
     val state: StateFlow<DeliveryState> = _state.asStateFlow()
 
-    init {
-        loadDeliveries()
-    }
-
     fun loadDeliveries(
         district: String? = null,
         city: String? = null,
@@ -42,6 +39,8 @@ class DeliveryViewModel @Inject constructor(
         status: String? = null
     ) {
         viewModelScope.launch {
+            val hasExistingData = _state.value.deliveries.isNotEmpty()
+
             deliveryRepository.getDeliveries(
                 district = district,
                 city = city,
@@ -50,12 +49,21 @@ class DeliveryViewModel @Inject constructor(
             ).collect { result ->
                 when (result) {
                     is Resource.Loading -> {
-                        _state.update { it.copy(isLoading = true, error = null) }
+                        // Only show full loading indicator on initial load
+                        // Use isRefreshing for subsequent loads to avoid layout glitch
+                        _state.update {
+                            it.copy(
+                                isLoading = !hasExistingData,
+                                isRefreshing = hasExistingData,
+                                error = null
+                            )
+                        }
                     }
                     is Resource.Success -> {
                         _state.update {
                             it.copy(
                                 isLoading = false,
+                                isRefreshing = false,
                                 deliveries = result.data ?: emptyList(),
                                 error = null
                             )
@@ -65,6 +73,7 @@ class DeliveryViewModel @Inject constructor(
                         _state.update {
                             it.copy(
                                 isLoading = false,
+                                isRefreshing = false,
                                 error = result.message
                             )
                         }

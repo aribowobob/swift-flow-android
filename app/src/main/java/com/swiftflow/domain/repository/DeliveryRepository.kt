@@ -5,7 +5,6 @@ import com.swiftflow.domain.model.CreateDeliveryRequest
 import com.swiftflow.domain.model.Delivery
 import com.swiftflow.domain.model.DeliveryListItem
 import com.swiftflow.domain.model.DeliveryPhoto
-import com.swiftflow.domain.model.DeliveryWithDetails
 import com.swiftflow.domain.model.UpdateDeliveryRequest
 import com.swiftflow.utils.Resource
 import kotlinx.coroutines.flow.Flow
@@ -20,7 +19,7 @@ interface DeliveryRepository {
         status: String? = null
     ): Flow<Resource<List<DeliveryListItem>>>
 
-    suspend fun getDelivery(id: Int): Flow<Resource<DeliveryWithDetails>>
+    suspend fun getDelivery(id: Int): Flow<Resource<DeliveryListItem>>
 
     suspend fun createDelivery(request: CreateDeliveryRequest): Flow<Resource<Delivery>>
 

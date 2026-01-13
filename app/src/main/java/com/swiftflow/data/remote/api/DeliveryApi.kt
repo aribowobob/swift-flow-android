@@ -4,7 +4,6 @@ import com.swiftflow.domain.model.CreateDeliveryRequest
 import com.swiftflow.domain.model.Delivery
 import com.swiftflow.domain.model.DeliveryListItem
 import com.swiftflow.domain.model.DeliveryPhoto
-import com.swiftflow.domain.model.DeliveryWithDetails
 import com.swiftflow.domain.model.UpdateDeliveryRequest
 import okhttp3.MultipartBody
 import retrofit2.http.*
@@ -21,7 +20,7 @@ interface DeliveryApi {
     ): List<DeliveryListItem>
 
     @GET("deliveries/{id}")
-    suspend fun getDelivery(@Path("id") id: Int): DeliveryWithDetails
+    suspend fun getDelivery(@Path("id") id: Int): DeliveryListItem
 
     @POST("deliveries")
     suspend fun createDelivery(@Body request: CreateDeliveryRequest): Delivery
