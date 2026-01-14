@@ -26,4 +26,8 @@ interface DeliveryRepository {
     suspend fun updateDelivery(id: Int, request: UpdateDeliveryRequest): Flow<Resource<Delivery>>
 
     suspend fun uploadPhotoFile(deliveryId: Int, photoUri: Uri): Flow<Resource<DeliveryPhoto>>
+
+    suspend fun uploadPhotoBytes(deliveryId: Int, imageBytes: ByteArray, filename: String): Flow<Resource<DeliveryPhoto>>
+
+    suspend fun deletePhoto(photoId: Int): Flow<Resource<Unit>>
 }

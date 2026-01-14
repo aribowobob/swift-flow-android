@@ -84,4 +84,31 @@ class DeliveryRepositoryImpl @Inject constructor(
     }.catch { e ->
         emit(Resource.Error(e.message ?: "Failed to upload photo"))
     }.flowOn(Dispatchers.IO)
+
+    override suspend fun uploadPhotoBytes(
+        deliveryId: Int,
+        imageBytes: ByteArray,
+        filename: String
+    ): Flow<Resource<DeliveryPhoto>> = flow {
+        emit(Resource.Loading())
+
+        // Create multipart request body from bytes
+        val mimeType = if (filename.endsWith(".png")) "image/png" else "image/jpeg"
+        val requestBody = imageBytes.toRequestBody(mimeType.toMediaTypeOrNull())
+        val part = MultipartBody.Part.createFormData("photo", filename, requestBody)
+
+        // Upload to API
+        val photo = deliveryApi.uploadPhotoFile(deliveryId, part)
+        emit(Resource.Success(photo))
+    }.catch { e ->
+        emit(Resource.Error(e.message ?: "Failed to upload photo"))
+    }.flowOn(Dispatchers.IO)
+
+    override suspend fun deletePhoto(photoId: Int): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        deliveryApi.deletePhoto(photoId)
+        emit(Resource.Success(Unit))
+    }.catch { e ->
+        emit(Resource.Error(e.message ?: "Failed to delete photo"))
+    }.flowOn(Dispatchers.IO)
 }

@@ -1,14 +1,23 @@
 package com.swiftflow.presentation.delivery
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -16,9 +25,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,12 +48,45 @@ import com.swiftflow.utils.DateFormatter
 fun DeliveryDetailScreen(
     deliveryId: Int,
     onNavigateBack: () -> Unit,
+    onNavigateToPhotoEditor: (deliveryId: Int, photoId: Int, photoUrl: String) -> Unit,
     viewModel: DeliveryDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    var showDeleteConfirmDialog by remember { mutableStateOf<DeliveryPhoto?>(null) }
+
+    // Photo picker launcher
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.uploadPhoto(it) }
+    }
 
     LaunchedEffect(deliveryId) {
         viewModel.loadDelivery(deliveryId)
+    }
+
+    // Delete confirmation dialog
+    showDeleteConfirmDialog?.let { photo ->
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = null },
+            title = { Text("Delete Photo") },
+            text = { Text("Are you sure you want to delete this photo?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deletePhoto(photo.id)
+                        showDeleteConfirmDialog = null
+                    }
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -52,6 +98,15 @@ fun DeliveryDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.toggleEditMode() }) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = if (state.isEditMode) "Done" else "Edit",
+                            tint = if (state.isEditMode) MaterialTheme.colorScheme.primary else LocalContentColor.current
                         )
                     }
                 }
@@ -89,7 +144,23 @@ fun DeliveryDetailScreen(
                     }
                 }
                 state.delivery != null -> {
-                    DeliveryDetailContent(delivery = state.delivery!!)
+                    DeliveryDetailContent(
+                        delivery = state.delivery!!,
+                        isEditMode = state.isEditMode,
+                        deletingPhotoId = state.deletingPhotoId,
+                        isUploadingPhoto = state.isUploadingPhoto,
+                        onPhotoClick = { photo ->
+                            if (state.isEditMode) {
+                                onNavigateToPhotoEditor(deliveryId, photo.id, photo.url)
+                            }
+                        },
+                        onDeletePhotoClick = { photo ->
+                            showDeleteConfirmDialog = photo
+                        },
+                        onAddPhotoClick = {
+                            photoPickerLauncher.launch("image/*")
+                        }
+                    )
                 }
             }
         }
@@ -97,15 +168,31 @@ fun DeliveryDetailScreen(
 }
 
 @Composable
-private fun DeliveryDetailContent(delivery: DeliveryListItem) {
+private fun DeliveryDetailContent(
+    delivery: DeliveryListItem,
+    isEditMode: Boolean,
+    deletingPhotoId: Int?,
+    isUploadingPhoto: Boolean,
+    onPhotoClick: (DeliveryPhoto) -> Unit,
+    onDeletePhotoClick: (DeliveryPhoto) -> Unit,
+    onAddPhotoClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        // Photos Section
-        if (delivery.photos.isNotEmpty()) {
-            PhotosSection(photos = delivery.photos)
+        // Photos Section - always show in edit mode (to allow adding)
+        if (delivery.photos.isNotEmpty() || isEditMode) {
+            PhotosSection(
+                photos = delivery.photos,
+                isEditMode = isEditMode,
+                deletingPhotoId = deletingPhotoId,
+                isUploadingPhoto = isUploadingPhoto,
+                onPhotoClick = onPhotoClick,
+                onDeleteClick = onDeletePhotoClick,
+                onAddPhotoClick = onAddPhotoClick
+            )
             Spacer(modifier = Modifier.height(16.dp))
         }
 
@@ -189,7 +276,15 @@ private fun DeliveryDetailContent(delivery: DeliveryListItem) {
 }
 
 @Composable
-private fun PhotosSection(photos: List<DeliveryPhoto>) {
+private fun PhotosSection(
+    photos: List<DeliveryPhoto>,
+    isEditMode: Boolean,
+    deletingPhotoId: Int?,
+    isUploadingPhoto: Boolean,
+    onPhotoClick: (DeliveryPhoto) -> Unit,
+    onDeleteClick: (DeliveryPhoto) -> Unit,
+    onAddPhotoClick: () -> Unit
+) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -198,14 +293,95 @@ private fun PhotosSection(photos: List<DeliveryPhoto>) {
             val baseUrl = BuildConfig.API_BASE_URL.replace("/api/", "")
             val fullUrl = "$baseUrl${photo.url}"
 
-            AsyncImage(
-                model = fullUrl,
-                contentDescription = "Delivery photo",
+            Box(
                 modifier = Modifier
                     .size(200.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop
-            )
+                    .clip(RoundedCornerShape(12.dp))
+            ) {
+                AsyncImage(
+                    model = fullUrl,
+                    contentDescription = "Delivery photo",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable(enabled = isEditMode) { onPhotoClick(photo) },
+                    contentScale = ContentScale.Crop
+                )
+
+                // Delete button overlay in edit mode
+                if (isEditMode) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.errorContainer)
+                            .clickable { onDeleteClick(photo) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Delete photo",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+
+                // Loading overlay when deleting this photo
+                if (deletingPhotoId == photo.id) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(40.dp),
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+
+        // Add photo button in edit mode
+        if (isEditMode) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .size(200.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(
+                            width = 2.dp,
+                            color = MaterialTheme.colorScheme.outline,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .clickable(enabled = !isUploadingPhoto) { onAddPhotoClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isUploadingPhoto) {
+                        CircularProgressIndicator()
+                    } else {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add photo",
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.outline
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Add Photo",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

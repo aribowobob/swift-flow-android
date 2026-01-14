@@ -14,10 +14,12 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import android.net.Uri
 import com.swiftflow.presentation.auth.AuthViewModel
 import com.swiftflow.presentation.auth.LoginScreen
 import com.swiftflow.presentation.common.MainScreen
 import com.swiftflow.presentation.delivery.DeliveryDetailScreen
+import com.swiftflow.presentation.delivery.editor.PhotoEditorScreen
 import com.swiftflow.presentation.delivery.wizard.CreateDeliveryWizardScreen
 import com.swiftflow.presentation.product.ProductFormScreen
 
@@ -27,6 +29,12 @@ sealed class Screen(val route: String) {
     data object CreateDelivery : Screen("create_delivery")
     data object DeliveryDetail : Screen("delivery_detail/{deliveryId}") {
         fun createRoute(deliveryId: Int) = "delivery_detail/$deliveryId"
+    }
+    data object PhotoEditor : Screen("photo_editor/{deliveryId}/{photoId}/{photoUrl}") {
+        fun createRoute(deliveryId: Int, photoId: Int, photoUrl: String): String {
+            val encodedUrl = Uri.encode(photoUrl)
+            return "photo_editor/$deliveryId/$photoId/$encodedUrl"
+        }
     }
     data object CreateProduct : Screen("create_product")
     data object EditProduct : Screen("edit_product/{productId}") {
@@ -107,6 +115,34 @@ fun NavGraph(
             DeliveryDetailScreen(
                 deliveryId = deliveryId,
                 onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToPhotoEditor = { delId, photoId, photoUrl ->
+                    navController.navigate(Screen.PhotoEditor.createRoute(delId, photoId, photoUrl))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.PhotoEditor.route,
+            arguments = listOf(
+                navArgument("deliveryId") { type = NavType.IntType },
+                navArgument("photoId") { type = NavType.IntType },
+                navArgument("photoUrl") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val deliveryId = backStackEntry.arguments?.getInt("deliveryId") ?: return@composable
+            val photoId = backStackEntry.arguments?.getInt("photoId") ?: return@composable
+            val photoUrl = backStackEntry.arguments?.getString("photoUrl")?.let { Uri.decode(it) } ?: return@composable
+
+            PhotoEditorScreen(
+                deliveryId = deliveryId,
+                photoId = photoId,
+                photoUrl = photoUrl,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onSaveSuccess = {
                     navController.popBackStack()
                 }
             )

@@ -40,8 +40,9 @@ Swift Flow Android is the mobile frontend for the Swift Flow logistics and distr
 - **Coil** 2.5.0 - Image loading and caching
 
 #### Camera & Location
-- **CameraX** 1.3.1 - Camera functionality
-- **Play Services Location** 21.1.0 - GPS coordinates
+- **CameraX** 1.3.1 - Camera functionality (not yet used)
+- **ExifInterface** 1.3.7 - Extract GPS data from photos
+- **Android Geocoder** - Built-in reverse geocoding (no API key needed)
 
 #### Lifecycle
 - **Lifecycle ViewModel Compose** 2.7.0
@@ -80,10 +81,25 @@ app/src/main/java/com/swiftflow/
 │   │   ├── AuthViewModel.kt
 │   │   └── LoginScreen.kt
 │   ├── delivery/
-│   │   └── DeliveryViewModel.kt
+│   │   ├── DeliveryViewModel.kt
+│   │   ├── DeliveryDetailViewModel.kt
+│   │   ├── DeliveryListScreen.kt
+│   │   ├── DeliveryDetailScreen.kt
+│   │   ├── DashboardScreen.kt
+│   │   └── wizard/           # 3-step delivery creation wizard
+│   │       ├── CreateDeliveryWizardViewModel.kt
+│   │       ├── CreateDeliveryWizardScreen.kt
+│   │       ├── PhotoSelectionStep.kt
+│   │       ├── LocationReviewStep.kt
+│   │       └── ProductSelectionStep.kt
 │   ├── product/
-│   │   └── ProductViewModel.kt
+│   │   ├── ProductViewModel.kt
+│   │   ├── ProductListScreen.kt
+│   │   └── ProductFormScreen.kt
+│   ├── settings/
+│   │   └── SettingsScreen.kt
 │   ├── common/
+│   │   ├── MainScreen.kt     # Bottom navigation container
 │   │   ├── components/       # Reusable composables
 │   │   └── theme/            # App theme configuration
 │   │       ├── Color.kt
@@ -170,28 +186,112 @@ data class Delivery(
 )
 ```
 
-## Key Features
+## Implementation Status
 
-### Implemented ✅
-- User authentication (login)
-- JWT token management with auto-injection
-- MVVM architecture setup
-- Navigation framework
-- Repository pattern for data access
-- Network error handling with Resource wrapper
+### Completed Features ✅
 
-### In Progress 🚧
-- Delivery list screen
-- Create delivery form
-- Product selection UI
+#### Authentication & Authorization
+- Login screen with JWT token authentication
+- Automatic token injection via `AuthInterceptor`
+- Token persistence using DataStore
+- Role-based navigation (SALES vs SUPERVISOR)
 
-### Planned 📋
-- Camera integration for delivery photos
-- GPS location capture
-- Offline support with Room database
-- Image upload to backend
-- Supervisor analytics dashboard
-- Delivery filtering by region/status
+#### Delivery Management
+- **Dashboard**: Summary cards showing delivery counts by status
+- **Delivery List**: Auto-refreshing list with role-based filtering
+  - Layout glitch fix: Uses `isRefreshing` state for background updates
+  - Auto-refresh on screen resume via `LifecycleEventObserver`
+- **Delivery Detail**: Clickable cards navigate to detail screen showing:
+  - Photos in horizontal carousel
+  - Location details (name, street, district, city, region, coordinates)
+  - Products list with quantities
+  - Notes section
+  - Created date and creator's initial
+- **Create Delivery Wizard** (3 steps):
+  - **Step 1**: Photo selection (max 10) with EXIF GPS extraction
+    - Uses legacy file picker to preserve EXIF data
+    - Green location indicator on photos with GPS data
+  - **Step 2**: Location review with Android Geocoder reverse geocoding
+    - All fields required and editable
+  - **Step 3**: Product selection with quantities and notes
+
+#### Product Management
+- Product list screen (SUPERVISOR only)
+- Create/edit product forms
+- Delete products
+
+#### User Interface
+- Bottom navigation with role-based items
+- Settings/Profile screen with logout
+- Material 3 design system
+- Dark/Light theme support
+
+### Backend Integration
+- All API endpoints integrated
+- Photo upload via multipart/form-data
+- Automatic role-based filtering (backend enforced)
+- Image loading from backend `/uploads/` directory
+
+### Known Issues / Limitations
+- Emulator keyboard visibility issues (workaround: use host keyboard)
+- No offline support yet (Room database not implemented)
+- No camera integration (uses photo picker instead)
+
+## Technical Details
+
+### Delivery Creation Wizard Flow
+
+The wizard creates deliveries in multiple steps with progressive enhancement:
+
+1. **Step 1: Photo Selection**
+   - User selects up to 10 photos
+   - EXIF GPS data extracted using `ExifInterface`
+   - Photos with GPS show green location indicator
+   - Requires `ACCESS_MEDIA_LOCATION` permission
+
+2. **Step 2: Location Review**
+   - Creates delivery with `NEED_TO_CONFIRM` status and empty products
+   - Extracts GPS from first photo with location data
+   - Calls Android Geocoder for reverse geocoding
+   - Uploads photos sequentially via multipart/form-data
+   - Updates delivery with geocoded location data
+   - All location fields are editable and required
+
+3. **Step 3: Product Selection**
+   - Select products from dropdown
+   - Specify quantities for each product
+   - Add optional notes
+   - Updates delivery with final products and notes
+
+**Why this approach:**
+- Progressive creation ensures data is saved even if user exits
+- Photos uploaded early to prevent data loss
+- Status `NEED_TO_CONFIRM` indicates incomplete delivery
+- Final step changes status to `READY`
+
+### Photo Picker vs Camera
+- Uses `ActivityResultContracts.GetMultipleContents` (legacy picker)
+- **NOT** using `PickMultipleVisualMedia` because it strips EXIF data for privacy
+- Requires `MediaStore.setRequireOriginal()` on Android 10+
+
+### Geocoding Strategy
+- Uses Android's built-in `Geocoder` class
+- No API key required (unlike Google Maps Geocoding API)
+- Requires network connection
+- Returns Indonesian locale results (`Locale("id", "ID")`)
+
+### Data Refresh Strategy
+- Two loading states: `isLoading` and `isRefreshing`
+- `isLoading`: Only true on initial load (empty list)
+- `isRefreshing`: True on background refresh (list already populated)
+- Prevents UI "glitch" where list disappears during refresh
+- Auto-refresh triggered by `LifecycleEventObserver` on `ON_RESUME`
+
+### Role-Based Filtering
+- Backend enforces filtering based on JWT claims
+- SALES users automatically filtered by `created_by`
+- SUPERVISOR users see all deliveries
+- Frontend simplified - no manual filtering logic needed
 
 ## Development Guidelines
 
