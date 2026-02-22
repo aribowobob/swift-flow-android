@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.swiftflow.BuildConfig
 import com.swiftflow.data.remote.api.AuthApi
+import com.swiftflow.data.remote.api.ChatApi
 import com.swiftflow.data.remote.api.DeliveryApi
 import com.swiftflow.data.remote.api.ProductApi
 import com.swiftflow.utils.AuthInterceptor
@@ -83,5 +84,11 @@ object NetworkModule {
     @Singleton
     fun provideDeliveryApi(retrofit: Retrofit): DeliveryApi {
         return retrofit.create(DeliveryApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideChatApi(retrofit: Retrofit): ChatApi {
+        return retrofit.create(ChatApi::class.java)
     }
 }

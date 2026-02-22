@@ -42,6 +42,7 @@ fun DeliveryListScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.loadDeliveries()
+                viewModel.loadUnreadCounts()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -119,6 +120,7 @@ fun DeliveryListScreen(
                         items(state.deliveries) { delivery ->
                             DeliveryCard(
                                 delivery = delivery,
+                                unreadCount = state.unreadCounts[delivery.id] ?: 0,
                                 onClick = { onDeliveryClick(delivery.id) }
                             )
                         }
@@ -129,9 +131,11 @@ fun DeliveryListScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeliveryCard(
     delivery: com.swiftflow.domain.model.DeliveryListItem,
+    unreadCount: Int = 0,
     onClick: () -> Unit = {}
 ) {
     // Format title: "District (Location Name)" or just "District"
@@ -189,7 +193,19 @@ fun DeliveryCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                StatusChip(status = delivery.status)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StatusChip(status = delivery.status)
+                    if (unreadCount > 0) {
+                        Badge(
+                            containerColor = MaterialTheme.colorScheme.error
+                        ) {
+                            Text("$unreadCount")
+                        }
+                    }
+                }
 
                 Text(
                     text = com.swiftflow.utils.DateFormatter.formatToDisplay(delivery.createdAt),

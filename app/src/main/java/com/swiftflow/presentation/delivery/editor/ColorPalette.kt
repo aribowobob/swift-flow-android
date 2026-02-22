@@ -57,6 +57,7 @@ private fun ColorButton(
     Box(
         modifier = Modifier
             .size(44.dp)
+            .clickable { onClick() }
             .clip(CircleShape)
             .background(color)
             .border(
@@ -68,6 +69,5 @@ private fun ColorButton(
                 },
                 shape = CircleShape
             )
-            .clickable { onClick() }
     )
 }

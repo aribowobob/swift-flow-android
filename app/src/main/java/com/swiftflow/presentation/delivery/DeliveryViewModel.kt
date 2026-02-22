@@ -6,6 +6,7 @@ import com.swiftflow.domain.model.CreateDeliveryRequest
 import com.swiftflow.domain.model.Delivery
 import com.swiftflow.domain.model.DeliveryListItem
 import com.swiftflow.domain.model.DeliveryProductInput
+import com.swiftflow.domain.repository.ChatRepository
 import com.swiftflow.domain.repository.DeliveryRepository
 import com.swiftflow.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,12 +22,14 @@ data class DeliveryState(
     val isRefreshing: Boolean = false,
     val deliveries: List<DeliveryListItem> = emptyList(),
     val error: String? = null,
-    val createdDelivery: Delivery? = null
+    val createdDelivery: Delivery? = null,
+    val unreadCounts: Map<Int, Int> = emptyMap()
 )
 
 @HiltViewModel
 class DeliveryViewModel @Inject constructor(
-    private val deliveryRepository: DeliveryRepository
+    private val deliveryRepository: DeliveryRepository,
+    private val chatRepository: ChatRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DeliveryState())
@@ -137,5 +140,26 @@ class DeliveryViewModel @Inject constructor(
 
     fun clearCreatedDelivery() {
         _state.update { it.copy(createdDelivery = null) }
+    }
+
+    fun loadUnreadCounts() {
+        viewModelScope.launch {
+            chatRepository.getUnreadCounts().collect { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        _state.update { state ->
+                            state.copy(
+                                unreadCounts = result.data?.associate {
+                                    it.deliveryId to it.count
+                                } ?: emptyMap()
+                            )
+                        }
+                    }
+                    else -> {
+                        // Silent fail for unread counts
+                    }
+                }
+            }
+        }
     }
 }

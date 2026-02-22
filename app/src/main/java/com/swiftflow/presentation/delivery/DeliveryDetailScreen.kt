@@ -18,6 +18,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -49,6 +50,7 @@ fun DeliveryDetailScreen(
     deliveryId: Int,
     onNavigateBack: () -> Unit,
     onNavigateToPhotoEditor: (deliveryId: Int, photoId: Int, photoUrl: String) -> Unit,
+    onNavigateToChat: (deliveryId: Int) -> Unit = {},
     viewModel: DeliveryDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -102,6 +104,12 @@ fun DeliveryDetailScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { onNavigateToChat(deliveryId) }) {
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = "Chat"
+                        )
+                    }
                     IconButton(onClick = { viewModel.toggleEditMode() }) {
                         Icon(
                             imageVector = Icons.Default.Edit,

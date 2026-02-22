@@ -270,7 +270,7 @@ private fun DrawingCanvas(
 
     Canvas(
         modifier = modifier
-            .pointerInput(Unit) {
+            .pointerInput(currentColor, strokeWidth) {
                 detectDragGestures(
                     onDragStart = { offset ->
                         currentPath = Path().apply {

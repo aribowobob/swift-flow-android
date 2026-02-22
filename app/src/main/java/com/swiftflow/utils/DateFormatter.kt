@@ -20,4 +20,15 @@ object DateFormatter {
             isoDate.take(10)
         }
     }
+
+    fun formatToTime(isoDate: String): String {
+        return try {
+            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+            val outputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+            val date = inputFormat.parse(isoDate.substring(0, 19))
+            date?.let { outputFormat.format(it) } ?: isoDate.take(5)
+        } catch (e: Exception) {
+            isoDate.take(5)
+        }
+    }
 }

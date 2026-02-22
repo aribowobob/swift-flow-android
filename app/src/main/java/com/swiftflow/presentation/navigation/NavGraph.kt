@@ -18,6 +18,7 @@ import android.net.Uri
 import com.swiftflow.presentation.auth.AuthViewModel
 import com.swiftflow.presentation.auth.LoginScreen
 import com.swiftflow.presentation.common.MainScreen
+import com.swiftflow.presentation.chat.ChatScreen
 import com.swiftflow.presentation.delivery.DeliveryDetailScreen
 import com.swiftflow.presentation.delivery.editor.PhotoEditorScreen
 import com.swiftflow.presentation.delivery.wizard.CreateDeliveryWizardScreen
@@ -35,6 +36,9 @@ sealed class Screen(val route: String) {
             val encodedUrl = Uri.encode(photoUrl)
             return "photo_editor/$deliveryId/$photoId/$encodedUrl"
         }
+    }
+    data object Chat : Screen("chat/{deliveryId}") {
+        fun createRoute(deliveryId: Int) = "chat/$deliveryId"
     }
     data object CreateProduct : Screen("create_product")
     data object EditProduct : Screen("edit_product/{productId}") {
@@ -119,6 +123,24 @@ fun NavGraph(
                 },
                 onNavigateToPhotoEditor = { delId, photoId, photoUrl ->
                     navController.navigate(Screen.PhotoEditor.createRoute(delId, photoId, photoUrl))
+                },
+                onNavigateToChat = { delId ->
+                    navController.navigate(Screen.Chat.createRoute(delId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.Chat.route,
+            arguments = listOf(
+                navArgument("deliveryId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val deliveryId = backStackEntry.arguments?.getInt("deliveryId") ?: return@composable
+            ChatScreen(
+                deliveryId = deliveryId,
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }
